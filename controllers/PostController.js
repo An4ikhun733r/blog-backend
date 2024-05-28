@@ -1,4 +1,4 @@
-import PostModel from "../models/Post.js";
+import PostModel from '../models/Post.js';
 
 export const getLastTags = async (req, res) => {
   try {
@@ -13,20 +13,19 @@ export const getLastTags = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "Unable to get tags",
+      message: 'Не удалось получить тэги',
     });
   }
 };
 
 export const getAll = async (req, res) => {
   try {
-    const posts = await PostModel.find().populate("user").exec();
-
+    const posts = await PostModel.find().populate('user').exec();
     res.json(posts);
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "Unable to get posts",
+      message: 'Не удалось получить статьи',
     });
   }
 };
@@ -34,38 +33,73 @@ export const getAll = async (req, res) => {
 export const getOne = async (req, res) => {
   try {
     const postId = req.params.id;
-    // Update the document
-    await PostModel.findOneAndUpdate(
-      { _id: postId },
-      { $inc: { viewsCount: 1 } }
-    );
 
-    // Retrieve the updated document and populate the 'user' field
-    const post = await PostModel.findOne({ _id: postId }).populate("user");
-    res.json(post);
+    PostModel.findOneAndUpdate(
+      {
+        _id: postId,
+      },
+      {
+        $inc: { viewsCount: 1 },
+      },
+      {
+        returnDocument: 'after',
+      },
+      (err, doc) => {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({
+            message: 'Не удалось вернуть статью',
+          });
+        }
+
+        if (!doc) {
+          return res.status(404).json({
+            message: 'Статья не найдена',
+          });
+        }
+
+        res.json(doc);
+      },
+    ).populate('user');
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "Unable to get post",
+      message: 'Не удалось получить статьи',
     });
   }
 };
 
-
-export const remove = (req, res) => {
+export const remove = async (req, res) => {
   try {
     const postId = req.params.id;
-    PostModel.findOneAndDelete({
-      _id: postId,
-    })
-      .then(() => res.json({ success: true }))
-      .catch((err) =>
-        res.status(500).json({ message: "Unable to delete post" })
-      );
+
+    PostModel.findOneAndDelete(
+      {
+        _id: postId,
+      },
+      (err, doc) => {
+        if (err) {
+          console.log(err);
+          return res.status(500).json({
+            message: 'Не удалось удалить статью',
+          });
+        }
+
+        if (!doc) {
+          return res.status(404).json({
+            message: 'Статья не найдена',
+          });
+        }
+
+        res.json({
+          success: true,
+        });
+      },
+    );
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "Unable to get post",
+      message: 'Не удалось получить статьи',
     });
   }
 };
@@ -76,17 +110,17 @@ export const create = async (req, res) => {
       title: req.body.title,
       text: req.body.text,
       imageUrl: req.body.imageUrl,
-      tags: req.body.tags,
+      tags: req.body.tags.split(','),
       user: req.userId,
     });
 
     const post = await doc.save();
-    console.log("req body", req.body);
+
     res.json(post);
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "Unable to create post",
+      message: 'Не удалось создать статью',
     });
   }
 };
@@ -94,6 +128,7 @@ export const create = async (req, res) => {
 export const update = async (req, res) => {
   try {
     const postId = req.params.id;
+
     await PostModel.updateOne(
       {
         _id: postId,
@@ -102,9 +137,9 @@ export const update = async (req, res) => {
         title: req.body.title,
         text: req.body.text,
         imageUrl: req.body.imageUrl,
-        tags: req.body.tags,
         user: req.userId,
-      }
+        tags: req.body.tags.split(','),
+      },
     );
 
     res.json({
@@ -113,7 +148,7 @@ export const update = async (req, res) => {
   } catch (err) {
     console.log(err);
     res.status(500).json({
-      message: "Unable to update",
+      message: 'Не удалось обновить статью',
     });
   }
 };

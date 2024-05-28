@@ -1,43 +1,29 @@
-import express from "express";
-import cors from "cors";
-import mongoose from "mongoose";
+import express from 'express';
+import fs from 'fs';
+import multer from 'multer';
+import cors from 'cors';
 
-import {
-  loginValidation,
-  postCreateValidation,
-  registerValidation,
-} from "./validations.js";
+import mongoose from 'mongoose';
 
-import {
-  getMe,
-  login,
-  register,
-  create,
-  getAll,
-  getOne,
-  remove,
-  update,
-  getLastTags,
-} from "./controllers/index.js";
+import { registerValidation, loginValidation, postCreateValidation } from './validations.js';
 
-import { checkAuth, handleValidationErrors } from "./utils/index.js";
+import { handleValidationErrors, checkAuth } from './utils/index.js';
 
-import multer from "multer";
+import { UserController, PostController } from './controllers/index.js';
 
 mongoose
   .connect(process.env.MONGODB_URI)
-  .then(() => {
-    console.log("DB ok");
-  })
-  .catch((err) => {
-    console.log("DB err: ", err);
-  });
+  .then(() => console.log('DB ok'))
+  .catch((err) => console.log('DB error', err));
 
 const app = express();
 
 const storage = multer.diskStorage({
   destination: (_, __, cb) => {
-    cb(null, "uploads");
+    if (!fs.existsSync('uploads')) {
+      fs.mkdirSync('uploads');
+    }
+    cb(null, 'uploads');
   },
   filename: (_, file, cb) => {
     cb(null, file.originalname);
@@ -48,41 +34,31 @@ const upload = multer({ storage });
 
 app.use(express.json());
 app.use(cors());
-app.use("/uploads", express.static("uploads"));
+app.use('/uploads', express.static('uploads'));
 
-app.post("/auth/login", loginValidation, handleValidationErrors, login);
-app.post(
-  "/auth/register",
-  registerValidation,
-  handleValidationErrors,
-  register
-);
-app.get("/auth/me", checkAuth, getMe);
+app.post('/auth/login', loginValidation, handleValidationErrors, UserController.login);
+app.post('/auth/register', registerValidation, handleValidationErrors, UserController.register);
+app.get('/auth/me', checkAuth, UserController.getMe);
 
-app.post("/upload", checkAuth, upload.single("image"), (req, res) => {
+app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
   res.json({
     url: `/uploads/${req.file.originalname}`,
   });
 });
 
-app.get("/tags", getLastTags);
-app.get("/posts", getAll);
-app.get("/posts/tags", getLastTags);
-app.get("/posts/:id", getOne);
-app.post(
-  "/posts",
-  checkAuth,
-  postCreateValidation,
-  handleValidationErrors,
-  create
-);
-app.delete("/posts/:id", checkAuth, remove);
+app.get('/tags', PostController.getLastTags);
+
+app.get('/posts', PostController.getAll);
+app.get('/posts/tags', PostController.getLastTags);
+app.get('/posts/:id', PostController.getOne);
+app.post('/posts', checkAuth, postCreateValidation, handleValidationErrors, PostController.create);
+app.delete('/posts/:id', checkAuth, PostController.remove);
 app.patch(
-  "/posts/:id",
+  '/posts/:id',
   checkAuth,
   postCreateValidation,
   handleValidationErrors,
-  update
+  PostController.update,
 );
 
 app.listen(process.env.PORT || 4444, (err) => {
@@ -90,5 +66,5 @@ app.listen(process.env.PORT || 4444, (err) => {
     return console.log(err);
   }
 
-  console.log("The server is ready. Here is the link: http://localhost:4444/");
+  console.log('Server OK');
 });

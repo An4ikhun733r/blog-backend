@@ -1,20 +1,20 @@
-import { body } from "express-validator";
-
-export const registerValidation = [
-  body("email", "Invalid email").isEmail(),
-  body("password", "Invalid password").isLength({ min: 5 }),
-  body("fullName", "Invalid full name: length should be more than 3"),
-  body("avatarUrl", "Invalid avatar").optional().isURL(),
-];
+import { body } from 'express-validator';
 
 export const loginValidation = [
-  body("email", "Invalid email").isEmail(),
-  body("password", "Invalid password").isLength({ min: 5 }),
+  body('email', 'Неверный формат почты').isEmail(),
+  body('password', 'Пароль должен быть минимум 5 символов').isLength({ min: 5 }),
+];
+
+export const registerValidation = [
+  body('email', 'Неверный формат почты').isEmail(),
+  body('password', 'Пароль должен быть минимум 5 символов').isLength({ min: 5 }),
+  body('fullName', 'Укажите имя').isLength({ min: 3 }),
+  body('avatarUrl', 'Неверная ссылка на аватарку').optional().isURL(),
 ];
 
 export const postCreateValidation = [
-  body("title", "Enter title of the post").isLength({ min: 3 }).isString(),
-  body("text", "Enter text of the post").isLength({ min: 3 }).isString(),
-  body("tags", "Invalid tag format").optional().isArray(),
-  body("imageUrl", "Invalid link of image").optional().isString(),
+  body('title', 'Введите заголовок статьи').isLength({ min: 3 }).isString(),
+  body('text', 'Введите текст статьи').isLength({ min: 3 }).isString(),
+  body('tags', 'Неверный формат тэгов').optional().isString(),
+  body('imageUrl', 'Неверная ссылка на изображение').optional().isString(),
 ];
