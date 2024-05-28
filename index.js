@@ -25,9 +25,7 @@ import { checkAuth, handleValidationErrors } from "./utils/index.js";
 import multer from "multer";
 
 mongoose
-  .connect(
-    "mongodb+srv://admin:wwwwww@cluster0.hsnhtxa.mongodb.net/blog?retryWrites=true&w=majority&appName=Cluster0"
-  )
+  .connect(process.env.MONGODB_URI)
   .then(() => {
     console.log("DB ok");
   })
@@ -61,12 +59,11 @@ app.post(
 );
 app.get("/auth/me", checkAuth, getMe);
 
-app.post("/upload", checkAuth, upload.single("image"),
-  (req, res) => {
-    res.json({
-      url: `/uploads/${req.file.originalname}`,
-    });
+app.post("/upload", checkAuth, upload.single("image"), (req, res) => {
+  res.json({
+    url: `/uploads/${req.file.originalname}`,
   });
+});
 
 app.get("/tags", getLastTags);
 app.get("/posts", getAll);
@@ -88,7 +85,7 @@ app.patch(
   update
 );
 
-app.listen(4444, (err) => {
+app.listen(process.env.PORT || 4444, (err) => {
   if (err) {
     return console.log(err);
   }
